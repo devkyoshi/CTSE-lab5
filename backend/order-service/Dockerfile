@@ -2,17 +2,22 @@
 FROM maven:3.9.6-eclipse-temurin-21 AS builder
 WORKDIR /app
 
-# Copy parent POM first (for dependency caching)
+# Copy parent POM
 COPY pom.xml .
 
-# Copy child module POM and source
-COPY order-service/pom.xml order-service/pom.xml
+# Copy ALL module POMs so Maven can resolve the multi-module structure
+COPY item-service/pom.xml    item-service/pom.xml
+COPY order-service/pom.xml   order-service/pom.xml
+COPY payment-service/pom.xml payment-service/pom.xml
+COPY gateway/pom.xml         gateway/pom.xml
+
+# Copy only this module's source
 COPY order-service/src order-service/src
 
-# Install parent POM without building child modules
+# Install parent POM (resolves module graph)
 RUN mvn install -N -DskipTests --no-transfer-progress
 
-# Build order-service
+# Build order-service only
 RUN mvn package -pl order-service -DskipTests --no-transfer-progress
 
 # ---- Runtime Stage ----
